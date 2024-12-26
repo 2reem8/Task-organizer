@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظم المهام والتحفيز</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #FF9800;
+            --danger-color: #F44336;
+            --complete-color: #8BC34A;
+            --background-color: #f4f4f9;
+            --text-color: #333;
+            --hover-color: #333;
+            --btn-hover-color: #ff5722;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .container {
+            background-color: white;
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .welcome {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .todo-input, .todo-time {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .todo-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background-color 0.3s;
+        }
+
+        .todo-btn:hover {
+            background-color: var(--btn-hover-color);
+        }
+
+        .todo-list {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 2rem;
+        }
+
+        .todo-item {
+            background-color: #fafafa;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+
+        .todo-item:hover {
+            transform: translateX(10px);
+        }
+
+        .complete {
+            background-color: var(--complete-color);
+            color: white;
+            text-decoration: line-through;
+        }
+
+        .delete-btn {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .mark-complete-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .mark-complete-btn:hover {
+            background-color: #fb8c00;
+        }
+
+        /* تنسيق لظهور التأثيرات */
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .todo-item {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .quote-section {
+            margin-top: 2rem;
+            background-color: #f8f8f8;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            color: var(--primary-color);
+        }
+
+        .quote-section p {
+            font-size: 1.1rem;
+        }
+
+        .timer {
+            margin-top: 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>منظم المهام</h1>
+        <div class="welcome">
+            مرحبًا، <span id="user-name">عزيزتي الطالبة</span>! 
+        </div>
+        <input type="text" id="todo-input" class="todo-input" placeholder="أضف مهمة جديدة..." />
+        <input type="number" id="todo-time" class="todo-time" placeholder="وقت المهمة بالدقائق" />
+        <button id="todo-btn" class="todo-btn">إضافة المهمة</button>
+        
+        <ul id="todo-list" class="todo-list"></ul>
+        
+        <div id="timer" class="timer"></div>
+
+        <div class="quote-section">
+            <p id="quote">"ابدأ يومك بحافز قوي: أنت أقوى مما تعتقد، ولا شيء مستحيل."</p>
+        </div>
+    </div>
+
+    <script>
+        // تخصيص اسم المستخدم
+        let userName = prompt("من فضلك، أدخل اسمك:");
+        if (userName) {
+            document.getElementById("user-name").textContent = userName;
+        }
+
+        // تعريف المتغيرات
+        const todoInput = document.getElementById("todo-input");
+        const todoTime = document.getElementById("todo-time");
+        const todoBtn = document.getElementById("todo-btn");
+        const todoList = document.getElementById("todo-list");
+        const timerDisplay = document.getElementById("timer");
+        const quoteDisplay = document.getElementById("quote");
+
+        let currentTaskTime = 0;
+        let countdown;
+
+        // إضافة مهمة جديدة
+        todoBtn.addEventListener("click", () => {
+            const taskText = todoInput.value.trim();
+            const taskTime = parseInt(todoTime.value);
+
+            if (taskText && taskTime) {
+                const todoItem = document.createElement("li");
+                todoItem.className = "todo-item";
+                todoItem.innerHTML = `
+                    <span>${taskText}</span> <span> (وقت: ${taskTime} دقيقة)</span>
+                    <button class="mark-complete-btn">إتمام</button>
+                    <button class="delete-btn">حذف</button>
+                `;
+                todoList.appendChild(todoItem);
+                todoInput.value = "";
+                todoTime.value = "";
+
+                // بدء المؤقت
+                currentTaskTime = taskTime * 60;
+                startTimer();
+
+                // تحديث النصائح
+                updateQuote();
+            }
+        });
+
+        // بدء العد التنازلي
+        function startTimer() {
+            clearInterval(countdown);
+            countdown = setInterval(() => {
+                if (currentTaskTime <= 0) {
+                    clearInterval(countdown);
+                    alert("انتهى الوقت! احرص على أخذ استراحة.");
+                    timerDisplay.textContent = "";
+                } else {
+                    currentTaskTime--;
+                    let minutes = Math.floor(currentTaskTime / 60);
+                    let seconds = currentTaskTime % 60;
+                    timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+                }
+            }, 1000);
+        }
+
+        // تحديث النصائح
+        function updateQuote() {
+            const quotes = [
+                "ابدأ يومك بحافز قوي: أنت أقوى مما تعتقد.",
+                "كل خطوة صغيرة تقربك من هدفك.",
+                "التخطيط الجيد نصف النجاح.",
+                "لا تستسلم، النجاح في الأفق."
+            ];
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            quoteDisplay.textContent = `"${randomQuote}"`;
+        }
+
+        // أحداث خاصة بالزر "إتمام" و "حذف"
+        todoList.addEventListener("click", (e) => {
+            if (e.target.classList.contains("mark-complete-btn")) {
+                const todoItem = e.target.closest(".todo-item");
+                todoItem.classList.toggle("complete");
+            }
+
+            if (e.target.classList.contains("delete-btn")) {
+                const todoItem = e.target.closest(".todo-item");
+                todoItem.remove();
+            }
+        });
+    </script>
+</body>
+</html>
